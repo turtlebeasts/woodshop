@@ -52,7 +52,10 @@ export default function Hero() {
         >
           <TiltCard
             gyro
+            mouse
             gyroMax={14}
+            mouseMax={10}
+            gyroWeight={0.65}
             className="group rounded-3xl overflow-hidden"
           >
             <figure className="relative rounded-3xl ring-1 ring-black/5 bg-white">

@@ -1,41 +1,55 @@
+// src/components/TiltCard.jsx
 import { useRef, useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { cn } from "../lib/cn";
 
 /**
- * TiltCard — mouse tilt on desktop, optional gyroscope on mobile.
- * props:
- *  - gyro: boolean (enable device orientation)
- *  - gyroMax: number (max tilt angle in degrees)
+ * TiltCard — blends gyro + mouse/pointer tilt.
+ *
+ * Props:
+ *  - gyro: boolean           (enable device orientation)
+ *  - mouse: boolean          (enable pointer hover/drag)
+ *  - gyroMax: number         (deg contribution from gyro)
+ *  - mouseMax: number        (deg contribution from pointer)
+ *  - gyroWeight: number      (0..1: weight of gyro vs pointer)
+ *  - hoverScale: number
  */
 export default function TiltCard({
   className = "",
   children,
   gyro = false,
+  mouse = true,
   gyroMax = 12,
+  mouseMax = 10,
+  gyroWeight = 0.6,
+  hoverScale = 1.025,
 }) {
   const ref = useRef(null);
 
-  // normalized cursor/orientation positions [0..1]
-  const x = useMotionValue(0.5);
-  const y = useMotionValue(0.5);
+  // normalized inputs [0..1]
+  const gx = useMotionValue(0.5);
+  const gy = useMotionValue(0.5);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
 
-  // map to rotate angles; when gyro is on, use gyroMax
-  const targetRx = useTransform(
-    y,
-    [0, 1],
-    [gyro ? gyroMax : 10, gyro ? -gyroMax : -10]
-  );
-  const targetRy = useTransform(
-    x,
-    [0, 1],
-    [gyro ? -gyroMax : -10, gyro ? gyroMax : 10]
-  );
+  // compute blended angles (separate ranges for gyro & mouse, then mix by weight)
+  const rotXTarget = useTransform([gy, my], ([gyv, myv]) => {
+    const aGy = (0.5 - gyv) * 2 * gyroMax; // map [0..1] -> [+gyroMax .. -gyroMax]
+    const aMs = (0.5 - myv) * 2 * mouseMax; // map [0..1] -> [+mouseMax .. -mouseMax]
+    return gyroWeight * aGy + (1 - gyroWeight) * aMs;
+  });
 
-  const rx = useSpring(targetRx, { stiffness: 220, damping: 18 });
-  const ry = useSpring(targetRy, { stiffness: 220, damping: 18 });
+  const rotYTarget = useTransform([gx, mx], ([gxv, mxv]) => {
+    const aGy = (gxv - 0.5) * 2 * gyroMax; // map [0..1] -> [-gyroMax .. +gyroMax]
+    const aMs = (mxv - 0.5) * 2 * mouseMax;
+    return gyroWeight * aGy + (1 - gyroWeight) * aMs;
+  });
+
+  const rotateX = useSpring(rotXTarget, { stiffness: 220, damping: 18 });
+  const rotateY = useSpring(rotYTarget, { stiffness: 220, damping: 18 });
   const scale = useSpring(1, { stiffness: 220, damping: 18 });
 
+  // gyro wiring
   const [gyroActive, setGyroActive] = useState(false);
   const [needsPermission, setNeedsPermission] = useState(false);
   const [supported, setSupported] = useState(false);
@@ -47,8 +61,9 @@ export default function TiltCard({
     setSupported(hasDO);
     if (!hasDO) return;
 
-    // iOS requires explicit permission; Android usually doesn't
-    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+    const needsReq =
+      typeof DeviceOrientationEvent.requestPermission === "function";
+    if (needsReq) {
       setNeedsPermission(true);
     } else {
       const detach = attachOrientation();
@@ -58,19 +73,19 @@ export default function TiltCard({
   }, [gyro]);
 
   function attachOrientation() {
-    const handler = (e) => {
-      // gamma: left/right (-90..90), beta: front/back (-180..180)
-      const g = typeof e.gamma === "number" ? e.gamma : 0;
-      const b = typeof e.beta === "number" ? e.beta : 0;
-      const nx = (g + 90) / 180; // -> 0..1
-      const ny = (b + 180) / 360; // -> 0..1
-      x.set(Math.min(1, Math.max(0, nx)));
-      y.set(Math.min(1, Math.max(0, ny)));
+    const handle = (e) => {
+      const g = typeof e.gamma === "number" ? e.gamma : 0; // left/right (-90..90)
+      const b = typeof e.beta === "number" ? e.beta : 0; // front/back (-180..180)
+      // normalize to [0..1]
+      const nx = (g + 90) / 180;
+      const ny = (b + 180) / 360;
+      gx.set(Math.min(1, Math.max(0, nx)));
+      gy.set(Math.min(1, Math.max(0, ny)));
     };
-    window.addEventListener("deviceorientation", handler, { passive: true });
+    window.addEventListener("deviceorientation", handle, { passive: true });
     setGyroActive(true);
     return () => {
-      window.removeEventListener("deviceorientation", handler);
+      window.removeEventListener("deviceorientation", handle);
       setGyroActive(false);
     };
   }
@@ -82,34 +97,35 @@ export default function TiltCard({
         setNeedsPermission(false);
         attachOrientation();
       } else {
-        setNeedsPermission(false); // denied
+        setNeedsPermission(false);
       }
     } catch {
       setNeedsPermission(false);
     }
   }
 
-  function onMove(e) {
-    if (gyro && gyroActive) return; // ignore mouse when gyro is driving
+  // pointer (mouse/touch/pen)
+  function onPointerMove(e) {
+    if (!mouse) return;
     const r = ref.current?.getBoundingClientRect();
     if (!r) return;
-    x.set((e.clientX - r.left) / r.width);
-    y.set((e.clientY - r.top) / r.height);
+    mx.set((e.clientX - r.left) / r.width);
+    my.set((e.clientY - r.top) / r.height);
   }
 
   return (
     <motion.div
       ref={ref}
-      onMouseMove={onMove}
-      onMouseEnter={() => scale.set(1.025)}
-      onMouseLeave={() => {
-        if (!gyroActive) {
-          x.set(0.5);
-          y.set(0.5);
+      onPointerMove={onPointerMove}
+      onPointerEnter={() => mouse && scale.set(hoverScale)}
+      onPointerLeave={() => {
+        if (mouse) {
+          mx.set(0.5);
+          my.set(0.5);
+          scale.set(1);
         }
-        scale.set(1);
       }}
-      style={{ rotateX: rx, rotateY: ry, scale, transformPerspective: 900 }}
+      style={{ rotateX, rotateY, scale, transformPerspective: 900 }}
       className={cn(
         "relative will-change-transform transition-[box-shadow,filter] duration-300 hover:drop-shadow-xl",
         className
@@ -117,7 +133,7 @@ export default function TiltCard({
     >
       {children}
 
-      {/* iOS prompt — requires a user gesture */}
+      {/* iOS motion permission prompt */}
       {gyro && supported && needsPermission && (
         <button
           type="button"
