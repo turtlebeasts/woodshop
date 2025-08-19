@@ -50,9 +50,12 @@ export default function Hero() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <TiltCard className="group rounded-3xl overflow-hidden">
+          <TiltCard
+            gyro
+            gyroMax={14}
+            className="group rounded-3xl overflow-hidden"
+          >
             <figure className="relative rounded-3xl ring-1 ring-black/5 bg-white">
-              {/* image */}
               <div className="aspect-[4/3]">
                 <img
                   src={heroImg}
@@ -60,11 +63,10 @@ export default function Hero() {
                   className="h-full w-full object-cover rounded-3xl transition-transform duration-500 will-change-transform group-hover:scale-[1.03]"
                   loading="eager"
                   decoding="async"
-                  fetchPriority="high"
+                  fetchpriority="high"
+                  draggable={false}
                 />
               </div>
-
-              {/* soft glow + sheen on hover */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
