@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Container from "./container.jsx";
+import Container from "./Container.jsx";
 import Button from "./Button.jsx";
 import { Menu } from "lucide-react";
 import MobileMenu from "./MobileMenu.jsx";
