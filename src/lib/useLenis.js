@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 
 /**
- * Smooth scrolling via Lenis + smooth anchor links.
  * @param {object} opts
  * @param {boolean} opts.anchor - enable smooth anchor link scrolling
  * @param {number} opts.headerOffset - pixels to offset for sticky header height
