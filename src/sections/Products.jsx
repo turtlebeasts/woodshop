@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import Container from "../components/container";
+import Container from "../components/Container";
 
 const images = import.meta.glob("../assets/*.{jpg,jpeg,png,webp,avif}", {
   eager: true,

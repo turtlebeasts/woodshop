@@ -1,4 +1,4 @@
-import Container from "../components/container.jsx";
+import Container from "../components/Container.jsx";
 import Button from "../components/Button.jsx";
 
 export default function Contact() {

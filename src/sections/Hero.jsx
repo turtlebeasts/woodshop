@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import Container from "../components/container.jsx";
+import Container from "../components/Container.jsx";
 import Button from "../components/Button.jsx";
 import heroImg from "../assets/hero.jpg";
 import TiltCard from "../components/TiltCard.jsx";

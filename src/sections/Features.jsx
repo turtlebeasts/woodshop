@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import Container from "../components/container";
+import Container from "../components/Container";
 import { ShieldCheck, Truck, CheckCircle2, Trees } from "lucide-react";
 
 const items = [
