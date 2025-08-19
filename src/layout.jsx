@@ -1,6 +1,6 @@
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
-import useLenis from "./lib/uselenis.js";
+import useLenis from "./lib/uselenis.jsx";
 
 export default function Layout({ children }) {
   useLenis({ anchor: true, headerOffset: 64 });
