@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/aspect-ratio";
+
+/* Theme (optional) */
+:root {
+  --bg: 255 255 252;
+  --fg: 21 24 21;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+/* Register a real Tailwind utility */
+@utility shadow-soft {
+  /* pick a soft shadow you like */
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Card utility that composes built-ins + your custom one */
+@utility card {
+  @apply rounded-2xl border border-black/5 bg-white shadow-soft;
+}
+
+/* (keep the rest of your CSS as-is) */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
