@@ -18,7 +18,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between">
         <a href="#" className="font-semibold tracking-tight text-amber-800">
-          WoodWorks
+          WoodWork
         </a>
 
         {/* Desktop nav */}
